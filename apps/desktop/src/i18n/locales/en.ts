@@ -6585,6 +6585,8 @@ export default {
     sidebarObjectInfoModeCommentRight: "Comments (align right)",
     sidebarObjectInfoModeSize: "Object size",
     sidebarObjectInfoModeHidden: "None",
+    sidebarHideDatabaseSize: "Hide database size in sidebar",
+    sidebarHideDatabaseSizeDescription: "Hide the database size shown next to database names in the sidebar (KB/MB/GB/TB). Only MySQL, PostgreSQL, SQLServer, ClickHouse, MongoDB are supported.",
     sidebarAllowHorizontalScroll: "Allow sidebar horizontal scroll",
     sidebarAllowHorizontalScrollDescription: "Show long table, view, and collection names in full by allowing horizontal sidebar scrolling.",
     sidebarIndent: "Sidebar indentation",

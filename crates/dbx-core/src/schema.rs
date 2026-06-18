@@ -754,8 +754,8 @@ async fn list_databases_once(state: &AppState, connection_id: &str) -> Result<Ve
             let is_mongo = db_config.as_ref().is_some_and(|config| config.db_type == DatabaseType::MongoDb);
             if is_mongo {
                 drop(connections);
-                let dbs = crate::mongo_ops::mongo_list_databases_core(state, connection_id).await?;
-                return Ok(dbs.into_iter().map(|name| db::DatabaseInfo { name, ..Default::default() }).collect());
+                let dbs = crate::mongo_ops::mongo_list_databases_with_size_core(state, connection_id).await?;
+                return Ok(dbs);
             }
             drop(connections);
             let mut client = client.lock().await;

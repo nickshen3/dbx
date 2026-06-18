@@ -539,6 +539,7 @@ const editSidebarCopyTableNameSeparator = ref<ColumnNameCopySeparator>(settingsS
 const editSidebarCopyTableNameIncludeSchema = ref(settingsStore.editorSettings.sidebarCopyTableNameIncludeSchema);
 const editRedisKeyTemplates = ref(normalizeRedisKeyTemplates(settingsStore.editorSettings.redisKeyTemplates).join("\n"));
 const editSidebarObjectInfoMode = ref<SidebarObjectInfoMode>(settingsStore.editorSettings.sidebarObjectInfoMode);
+const editSidebarHideDatabaseSize = ref(settingsStore.editorSettings.sidebarHideDatabaseSize);
 const editSidebarAllowHorizontalScroll = ref(settingsStore.editorSettings.sidebarAllowHorizontalScroll);
 const editSidebarIndent = ref(settingsStore.editorSettings.sidebarIndent);
 const editSidebarFontSize = ref(settingsStore.editorSettings.sidebarFontSize);
@@ -1091,6 +1092,7 @@ function syncEditorSettingsDraftFromStore() {
   editSidebarCopyTableNameIncludeSchema.value = settingsStore.editorSettings.sidebarCopyTableNameIncludeSchema;
   editRedisKeyTemplates.value = normalizeRedisKeyTemplates(settingsStore.editorSettings.redisKeyTemplates).join("\n");
   editSidebarObjectInfoMode.value = settingsStore.editorSettings.sidebarObjectInfoMode;
+  editSidebarHideDatabaseSize.value = settingsStore.editorSettings.sidebarHideDatabaseSize;
   editSidebarAllowHorizontalScroll.value = settingsStore.editorSettings.sidebarAllowHorizontalScroll;
   editSidebarIndent.value = settingsStore.editorSettings.sidebarIndent;
   editSidebarFontSize.value = settingsStore.editorSettings.sidebarFontSize;
@@ -1205,7 +1207,8 @@ function hasChanges(): boolean {
     editMetadataCacheMaxMemoryMb.value !== settingsStore.desktopSettings.metadata_cache_max_memory_mb ||
     editDuckDbWorkerProcessIsolation.value !== settingsStore.desktopSettings.duckdb_worker_process_isolation ||
     normalizeDuckDbWorkerMaxProcesses(editDuckDbWorkerMaxProcesses.value) !== settingsStore.desktopSettings.duckdb_worker_max_processes ||
-    editSidebarTablePageSize.value !== (settingsStore.desktopSettings.sidebar_table_page_size ?? DEFAULT_SIDEBAR_TABLE_PAGE_SIZE)
+    editSidebarTablePageSize.value !== (settingsStore.desktopSettings.sidebar_table_page_size ?? DEFAULT_SIDEBAR_TABLE_PAGE_SIZE) ||
+    editSidebarHideDatabaseSize.value !== settingsStore.editorSettings.sidebarHideDatabaseSize
   );
 }
 
@@ -1220,6 +1223,10 @@ async function persistSettings() {
     editEditorSettingsBase.value = editorSettingsDraftFromSettings(settingsStore.editorSettings);
   }
   const metadataCacheMaxMemoryMb = normalizeMetadataCacheMemoryMb(editMetadataCacheMaxMemoryMb.value);
+  if (editSidebarHideDatabaseSize.value !== settingsStore.editorSettings.sidebarHideDatabaseSize) {
+    settingsStore.updateEditorSettings({ sidebarHideDatabaseSize: editSidebarHideDatabaseSize.value });
+    await settingsStore.persistEditorSettings();
+  }
   await settingsStore.updateDesktopSettings({
     show_tray_icon: editShowTrayIcon.value,
     quit_on_close: editQuitOnClose.value,
@@ -1490,6 +1497,7 @@ function resetAllDefaults() {
   editShowTableDdlHoverPreview.value = DEFAULT_EDITOR_SETTINGS.showTableDdlHoverPreview;
   editUpdateNotificationsEnabled.value = DEFAULT_EDITOR_SETTINGS.updateNotificationsEnabled;
   editSidebarObjectInfoMode.value = DEFAULT_EDITOR_SETTINGS.sidebarObjectInfoMode;
+  editSidebarHideDatabaseSize.value = DEFAULT_EDITOR_SETTINGS.sidebarHideDatabaseSize;
   editSidebarAllowHorizontalScroll.value = DEFAULT_EDITOR_SETTINGS.sidebarAllowHorizontalScroll;
   editSidebarIndent.value = DEFAULT_EDITOR_SETTINGS.sidebarIndent;
   editSidebarFontSize.value = DEFAULT_EDITOR_SETTINGS.sidebarFontSize;
@@ -5750,6 +5758,20 @@ onUnmounted(() => {
                     <SelectItem value="hidden">{{ t("settings.sidebarObjectInfoModeHidden") }}</SelectItem>
                   </SelectContent>
                 </Select>
+              </div>
+              <div class="flex items-center justify-between gap-4 rounded-md border bg-muted/20 px-3 py-2">
+                <div class="flex items-center gap-2">
+                  <Label for="sidebar-hide-database-size">{{ t("settings.sidebarHideDatabaseSize") }}</Label>
+                  <Tooltip>
+                    <TooltipTrigger as-child>
+                      <CircleHelp class="h-3.5 w-3.5 cursor-help text-muted-foreground hover:text-foreground" />
+                    </TooltipTrigger>
+                    <TooltipContent class="max-w-[320px] text-xs leading-relaxed" side="top" align="start">
+                      {{ t("settings.sidebarHideDatabaseSizeDescription") }}
+                    </TooltipContent>
+                  </Tooltip>
+                </div>
+                <Switch id="sidebar-hide-database-size" v-model="editSidebarHideDatabaseSize" />
               </div>
               <div class="flex items-center justify-between gap-4 rounded-md border bg-muted/20 px-3 py-2">
                 <div class="flex items-center gap-2">

@@ -6567,6 +6567,8 @@ export default withEnglishFallback({
     sidebarObjectInfoModeCommentRight: "注释（右侧对齐）",
     sidebarObjectInfoModeSize: "对象大小",
     sidebarObjectInfoModeHidden: "不显示",
+    sidebarHideDatabaseSize: "隐藏侧边栏数据库大小",
+    sidebarHideDatabaseSizeDescription: "隐藏侧边栏数据库名称旁显示的库大小（KB/MB/GB/TB）。仅 MySQL、PostgreSQL、SQLServer、ClickHouse、MongoDB 支持。",
     sidebarAllowHorizontalScroll: "允许侧边栏横向滚动",
     sidebarAllowHorizontalScrollDescription: "完整显示较长的表、视图和集合名称；默认关闭以保留省略号截断。",
     sidebarIndent: "侧边栏缩进",

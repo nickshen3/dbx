@@ -5573,6 +5573,8 @@ export default withEnglishFallback({
     sidebarObjectInfoModeCommentRight: "註解（靠右對齊）",
     sidebarObjectInfoModeSize: "物件大小",
     sidebarObjectInfoModeHidden: "不顯示",
+    sidebarHideDatabaseSize: "隱藏側邊欄資料庫大小",
+    sidebarHideDatabaseSizeDescription: "隱藏側邊欄資料庫名稱旁顯示的資料庫大小（KB/MB/GB/TB）。僅 MySQL、PostgreSQL、SQLServer、ClickHouse、MongoDB 支援。",
     sidebarAllowHorizontalScroll: "允許側邊欄水平捲動",
     sidebarAllowHorizontalScrollDescription: "透過啟用側邊欄的水平捲動功能，完整顯示長表格、檢視和集合的名稱",
     snippetsDescription: "自訂編輯器中觸發的 SQL 程式碼片段範本。",

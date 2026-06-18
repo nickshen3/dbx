@@ -6282,6 +6282,8 @@ export default withEnglishFallback({
     sidebarObjectInfoModeCommentRight: "コメント（右揃え）",
     sidebarObjectInfoModeSize: "オブジェクトサイズ",
     sidebarObjectInfoModeHidden: "表示しない",
+    sidebarHideDatabaseSize: "サイドバーのデータベースサイズを非表示",
+    sidebarHideDatabaseSizeDescription: "サイドバーのデータベース名の横に表示されるデータベースサイズ（KB/MB/GB/TB）を非表示にします。MySQL、PostgreSQL、SQLServer、ClickHouse、MongoDB のみサポートされています。",
     sidebarAllowHorizontalScroll: "サイドバーの横スクロールを許可",
     sidebarAllowHorizontalScrollDescription: "サイドバーの横スクロールを許可して、長いテーブル、ビュー、コレクション名を完全に表示します。",
     snippetsDescription: "エディタでトリガーされるSQLスニペットテンプレートをカスタマイズします。",

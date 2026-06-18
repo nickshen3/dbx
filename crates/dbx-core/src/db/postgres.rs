@@ -2902,6 +2902,35 @@ fn database_storage_sql() -> &'static str {
 }
 
 pub async fn list_databases(pool: &Pool) -> Result<Vec<DatabaseInfo>, String> {
+    match list_databases_with_size(pool).await {
+        Ok(databases) => Ok(databases),
+        Err(error) => {
+            log::debug!("Falling back to name-only database list after size query failed: {error}");
+            list_databases_names_only(pool).await
+        }
+    }
+}
+
+async fn list_databases_with_size(pool: &Pool) -> Result<Vec<DatabaseInfo>, String> {
+    let client = checkout_postgres_client(pool, None, super::connection_timeout()).await?;
+    let stmt = client
+        .prepare_cached(
+            "SELECT datname, pg_database_size(datname)::bigint \
+             FROM pg_database \
+             WHERE datallowconn = true \
+             ORDER BY datname",
+        )
+        .await
+        .map_err(|e| e.to_string())?;
+    let rows = client.query(&stmt, &[]).await.map_err(|e| e.to_string())?;
+
+    Ok(rows
+        .iter()
+        .map(|row| DatabaseInfo { name: row.get::<_, String>(0), size: Some(row.get::<_, i64>(1) as u64) })
+        .collect())
+}
+
+async fn list_databases_names_only(pool: &Pool) -> Result<Vec<DatabaseInfo>, String> {
     let client = checkout_postgres_client(pool, None, super::connection_timeout()).await?;
     let rows = postgres_query_cached(&client, list_databases_sql(), &[]).await.map_err(|e| e.to_string())?;
 

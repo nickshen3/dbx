@@ -6258,6 +6258,8 @@ export default withEnglishFallback({
     sidebarObjectInfoModeCommentRight: "Comentários (alinhar à direita)",
     sidebarObjectInfoModeSize: "Tamanho do objeto",
     sidebarObjectInfoModeHidden: "Nenhuma",
+    sidebarHideDatabaseSize: "Ocultar o tamanho do banco de dados na barra lateral",
+    sidebarHideDatabaseSizeDescription: "Oculta o tamanho do banco de dados exibido ao lado dos nomes na barra lateral (KB/MB/GB/TB). Compatível apenas com MySQL, PostgreSQL, SQLServer, ClickHouse, MongoDB.",
     sidebarAllowHorizontalScroll: "Permitir rolagem horizontal da barra lateral",
     sidebarAllowHorizontalScrollDescription: "Mostrar nomes longos de tabelas, views e coleções por completo, permitindo a rolagem horizontal da barra lateral.",
     snippetsDescription: "Personalize os modelos de snippets SQL acionados no editor.",

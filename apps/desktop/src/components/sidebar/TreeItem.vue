@@ -43,6 +43,7 @@ import { useConnectionStore } from "@/stores/connectionStore";
 import { useQueryStore } from "@/stores/queryStore";
 import { useSettingsStore } from "@/stores/settingsStore";
 import { useToast } from "@/composables/useToast";
+import { formatBytes } from "@/lib/formatBytes";
 import DatabaseIcon from "@/components/icons/DatabaseIcon.vue";
 import ConnectionErrorIndicator from "@/components/connection/ConnectionErrorIndicator.vue";
 import ReadOnlySessionControl from "@/components/connection/ReadOnlySessionControl.vue";
@@ -990,6 +991,9 @@ const isRenamingSavedSql = ref(false);
 
 const isRenamingConnection = ref(false);
 
+function databaseSizeLabel() {
+  return !settingsStore.editorSettings.sidebarHideDatabaseSize && props.node.type === "database" ? formatBytes(props.node.sizeBytes ?? null) : null;
+}
 const renameInput = ref("");
 
 const renameInputRef = ref<HTMLInputElement>();
@@ -1533,6 +1537,7 @@ function onKeydown(event: KeyboardEvent) {
               >{{ visibleLabel(node) }}</span
             >
             <span v-if="treeNodeSecondaryValue(node)" class="min-w-0 max-w-[55%] shrink truncate text-xs text-muted-foreground" :title="treeNodeSecondaryValue(node)">{{ treeNodeSecondaryValue(node) }}</span>
+            <span v-if="databaseSizeLabel()" class="ml-auto shrink-0 text-muted-foreground/60 text-[10px]">{{ databaseSizeLabel() }}</span>
             <button
               v-if="canDragPinnedOrder()"
               type="button"
