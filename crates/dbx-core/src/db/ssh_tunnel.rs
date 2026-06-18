@@ -137,6 +137,7 @@ async fn connect_and_authenticate(
 
 /// Try to authenticate using ssh-agent identities. Returns `Ok(())` on success,
 /// or an error describing why agent auth failed (unavailable, no identities, all rejected).
+#[cfg_attr(not(unix), allow(unused_variables))]
 async fn try_authenticate_with_agent(
     session: &mut Handle<SshClient>,
     ssh_user: &str,
