@@ -10,6 +10,79 @@ pub async fn mongo_list_databases_core(state: &AppState, connection_id: &str) ->
     crate::document_ops::list_databases_core(state, connection_id).await
 }
 
+/// 带大小信息的数据库列表，供 schema 层（侧边栏）展示数据库体积使用。
+/// 保留独立入口而不复用 `document_ops::list_databases_core`，因为后者仅返回名称。
+pub async fn mongo_list_databases_with_size_core(
+    state: &AppState,
+    connection_id: &str,
+) -> Result<Vec<crate::db::DatabaseInfo>, String> {
+    ensure_document_pool(state, connection_id).await?;
+    let fallback_database = configured_mongo_database(state, connection_id).await;
+    let connections = state.connections.read().await;
+    match connections.get(connection_id).ok_or("Not found")? {
+        PoolKind::MongoDb(client) => match mongo_driver::list_databases_with_size(client).await {
+            Ok(databases) => Ok(sort_database_infos(databases)),
+            Err(error) if mongo_list_databases_unauthorized(&error) => {
+                fallback_database_with_size(&error, fallback_database)
+            }
+            Err(error) => Err(error),
+        },
+        PoolKind::Elasticsearch(_) | PoolKind::VectorDb(_) => {
+            Ok(vec![crate::db::DatabaseInfo { name: "default".to_string(), size: None }])
+        }
+        PoolKind::Agent(client) => {
+            let mut client = client.lock().await;
+            match client.mongo_list_databases::<Vec<serde_json::Value>>().await {
+                Ok(result) => Ok(sort_database_infos(
+                    result
+                        .iter()
+                        .filter_map(|v| {
+                            let name = v.get("name")?.as_str()?.to_string();
+                            let size = v
+                                .get("sizeOnDisk")
+                                .and_then(|s| s.as_i64().or_else(|| s.as_u64().map(|u| u as i64)))
+                                .map(|size| size as u64)
+                                .filter(|&size| size > 0);
+                            Some((name, size))
+                        })
+                        .collect(),
+                )),
+                Err(error) if mongo_list_databases_unauthorized(&error) => {
+                    fallback_database_with_size(&error, fallback_database)
+                }
+                Err(error) => Err(error),
+            }
+        }
+        _ => Err("Not a MongoDB/Elasticsearch/vector connection".to_string()),
+    }
+}
+
+fn sort_database_infos(mut entries: Vec<(String, Option<u64>)>) -> Vec<crate::db::DatabaseInfo> {
+    entries.sort_by(|a, b| {
+        let left = a.0.to_lowercase();
+        let right = b.0.to_lowercase();
+        left.cmp(&right).then_with(|| a.0.cmp(&b.0))
+    });
+    entries.into_iter().map(|(name, size)| crate::db::DatabaseInfo { name, size }).collect()
+}
+
+fn fallback_database_with_size(
+    error: &str,
+    fallback_database: Option<String>,
+) -> Result<Vec<crate::db::DatabaseInfo>, String> {
+    fallback_database.map(|name| vec![crate::db::DatabaseInfo { name, size: None }]).ok_or_else(|| error.to_string())
+}
+
+async fn configured_mongo_database(state: &AppState, connection_id: &str) -> Option<String> {
+    let configs = state.configs.read().await;
+    configs.get(connection_id).and_then(|config| config.effective_database().map(str::to_string))
+}
+
+fn mongo_list_databases_unauthorized(error: &str) -> bool {
+    let lower = error.to_lowercase();
+    lower.contains("not authorized") && lower.contains("listdatabases")
+}
+
 pub async fn mongo_list_collections_core(
     state: &AppState,
     connection_id: &str,

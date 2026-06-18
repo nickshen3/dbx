@@ -2634,6 +2634,8 @@ export default withEnglishFallback({
     sidebarTablePageSizeDescription: "サイドバーツリーで1ページあたりに読み込むテーブル/オブジェクトの最大数です。テーブルが多い場合は増やすとページ切り替えが減ります。",
     sidebarHideTableComments: "サイドバーのテーブルコメントを非表示",
     sidebarHideTableCommentsDescription: "横のスペースを節約するため、サイドバーツリーで名前の横に表示されるテーブル/ビューコメントを非表示にします。",
+    sidebarHideDatabaseSize: "サイドバーのデータベースサイズを非表示",
+    sidebarHideDatabaseSizeDescription: "サイドバーのデータベース名の横に表示されるデータベースサイズ（KB/MB/GB/TB）を非表示にします。MySQL、PostgreSQL、SQLServer、ClickHouse、MongoDB のみサポートされています。",
     sidebarAllowHorizontalScroll: "サイドバーの横スクロールを許可",
     sidebarAllowHorizontalScrollDescription: "サイドバーの横スクロールを許可して、長いテーブル、ビュー、コレクション名を完全に表示します。",
     snippetsDescription: "エディタでトリガーされるSQLスニペットテンプレートをカスタマイズします。",

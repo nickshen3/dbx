@@ -2641,6 +2641,8 @@ export default withEnglishFallback({
     sidebarTablePageSizeDescription: "Número máximo de tablas/objetos cargados por página en el árbol lateral. Auméntalo si tienes muchas tablas para reducir páginas.",
     sidebarHideTableComments: "Ocultar comentarios de tablas en la barra lateral",
     sidebarHideTableCommentsDescription: "Oculta los comentarios de tablas/vistas junto a los nombres en el árbol de la barra lateral para ahorrar espacio horizontal.",
+    sidebarHideDatabaseSize: "Ocultar el tamaño de la base de datos en la barra lateral",
+    sidebarHideDatabaseSizeDescription: "Oculta el tamaño de la base de datos mostrado junto a los nombres en la barra lateral (KB/MB/GB/TB). Solo se admite MySQL, PostgreSQL, SQLServer, ClickHouse, MongoDB.",
     sidebarAllowHorizontalScroll: "Permitir desplazamiento horizontal lateral",
     sidebarAllowHorizontalScrollDescription: "Muestra completos los nombres largos de tablas, vistas y colecciones permitiendo desplazamiento horizontal en la barra lateral.",
     snippetsDescription: "Personaliza plantillas SQL activadas en el editor.",

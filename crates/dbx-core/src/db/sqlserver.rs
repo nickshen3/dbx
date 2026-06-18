@@ -687,6 +687,40 @@ fn sqlserver_cell_to_json(cell: &ColumnData<'static>) -> serde_json::Value {
 }
 
 pub async fn list_databases(client: &mut SqlServerClient) -> Result<Vec<DatabaseInfo>, String> {
+    match list_databases_with_size(client).await {
+        Ok(databases) => Ok(databases),
+        Err(error) => {
+            log::debug!("Falling back to name-only database list after size query failed: {error}");
+            list_databases_names_only(client).await
+        }
+    }
+}
+
+async fn list_databases_with_size(client: &mut SqlServerClient) -> Result<Vec<DatabaseInfo>, String> {
+    let stream = client
+        .query(
+            "SELECT d.name, \
+                    (SELECT SUM(CAST(mf.size AS bigint) * 8 * 1024) \
+                     FROM sys.master_files mf \
+                     WHERE mf.database_id = d.database_id) \
+             FROM sys.databases d \
+             WHERE d.state = 0 \
+             ORDER BY d.name",
+            &[],
+        )
+        .await
+        .map_err(|e| e.to_string())?;
+    let rows = stream.into_first_result().await.map_err(|e| e.to_string())?;
+    Ok(rows
+        .iter()
+        .map(|row| DatabaseInfo {
+            name: row.get::<&str, _>(0).unwrap_or("").to_string(),
+            size: row.get::<i64, _>(1).map(|size| size as u64).filter(|&size| size > 0),
+        })
+        .collect())
+}
+
+async fn list_databases_names_only(client: &mut SqlServerClient) -> Result<Vec<DatabaseInfo>, String> {
     let stream = client
         .query(
             "SELECT name \
@@ -698,7 +732,10 @@ pub async fn list_databases(client: &mut SqlServerClient) -> Result<Vec<Database
         .await
         .map_err(|e| e.to_string())?;
     let rows = stream.into_first_result().await.map_err(|e| e.to_string())?;
-    Ok(rows.iter().map(|row| DatabaseInfo { name: row.get::<&str, _>(0).unwrap_or("").to_string() }).collect())
+    Ok(rows
+        .iter()
+        .map(|row| DatabaseInfo { name: row.get::<&str, _>(0).unwrap_or("").to_string(), size: None })
+        .collect())
 }
 
 pub async fn test_connection(client: &mut SqlServerClient) -> Result<(), String> {
@@ -743,7 +780,7 @@ pub async fn list_linked_server_catalogs(
     Ok(rows
         .iter()
         .filter_map(|row| row.get::<&str, _>(0).map(str::trim).filter(|name| !name.is_empty()))
-        .map(|name| DatabaseInfo { name: name.to_string() })
+        .map(|name| DatabaseInfo { name: name.to_string(), size: None })
         .collect())
 }
 

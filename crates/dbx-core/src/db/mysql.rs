@@ -1057,19 +1057,35 @@ pub async fn connect_bare_with_pool_limit_and_setup(
 
 pub async fn list_databases(pool: &MySqlPool) -> Result<Vec<DatabaseInfo>, String> {
     let mut conn = get_conn_with_timeout(pool, super::connection_timeout()).await?;
-    let result = match conn.query_iter("SELECT SCHEMA_NAME FROM information_schema.SCHEMATA ORDER BY SCHEMA_NAME").await
+    let result = match conn
+        .query_iter(
+            "SELECT s.SCHEMA_NAME, \
+                    (SELECT CAST(COALESCE(SUM(t.DATA_LENGTH + t.INDEX_LENGTH), 0) AS UNSIGNED) \
+                     FROM information_schema.TABLES t \
+                     WHERE t.TABLE_SCHEMA = s.SCHEMA_NAME) AS size_bytes \
+             FROM information_schema.SCHEMATA s \
+             ORDER BY s.SCHEMA_NAME",
+        )
+        .await
     {
         Ok(result) => result,
         Err(err) => {
-            log::debug!("Falling back to SHOW DATABASES after information_schema.SCHEMATA failed: {err}");
+            log::debug!("Falling back to SHOW DATABASES after database size query failed: {err}");
             return list_databases_show(pool).await;
         }
     };
     let rows: Vec<mysql_async::Row> = result.collect_and_drop().await.map_err(|e| e.to_string())?;
-    let databases = database_infos_from_names(rows.iter().map(|row| get_str(row, 0)), false);
+    let databases = database_infos_with_size(
+        rows.iter().map(|row| {
+            let name = get_str(row, 0);
+            let size = row_get::<i64, _>(row, 1).filter(|&size| size > 0).map(|size| size as u64);
+            (name, size)
+        }),
+        false,
+    );
 
     if databases.is_empty() {
-        log::debug!("Falling back to SHOW DATABASES after information_schema.SCHEMATA returned no named databases");
+        log::debug!("Falling back to SHOW DATABASES after database size query returned no named databases");
         return list_databases_show(pool).await;
     }
 
@@ -1093,12 +1109,32 @@ fn database_infos_from_names(
         .filter_map(|name| {
             saw_row = true;
             let name = name.trim().to_string();
-            (!name.is_empty()).then_some(DatabaseInfo { name })
+            (!name.is_empty()).then_some(DatabaseInfo { name, size: None })
         })
         .collect();
     databases.sort_by(|a, b| a.name.cmp(&b.name));
     if databases.is_empty() && saw_row && include_catalogless_when_blank {
-        return vec![DatabaseInfo { name: String::new() }];
+        return vec![DatabaseInfo { name: String::new(), size: None }];
+    }
+    databases
+}
+
+fn database_infos_with_size(
+    entries: impl IntoIterator<Item = (String, Option<u64>)>,
+    include_catalogless_when_blank: bool,
+) -> Vec<DatabaseInfo> {
+    let mut saw_row = false;
+    let mut databases: Vec<DatabaseInfo> = entries
+        .into_iter()
+        .filter_map(|(name, size)| {
+            saw_row = true;
+            let name = name.trim().to_string();
+            (!name.is_empty()).then_some(DatabaseInfo { name, size })
+        })
+        .collect();
+    databases.sort_by(|a, b| a.name.cmp(&b.name));
+    if databases.is_empty() && saw_row && include_catalogless_when_blank {
+        return vec![DatabaseInfo { name: String::new(), size: None }];
     }
     databases
 }

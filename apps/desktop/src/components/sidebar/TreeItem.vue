@@ -66,6 +66,7 @@ import { useDatabaseOptions } from "@/composables/useDatabaseOptions";
 import type { ColumnInfo, ConnectionConfig, DatabaseType, ObjectSourceKind, TreeNode, TreeNodeType } from "@/types/database";
 import * as api from "@/lib/api";
 import { uuid } from "@/lib/utils";
+import { formatBytes } from "@/lib/formatBytes";
 import { resolveDefaultDatabase } from "@/lib/defaultDatabase";
 import { canTreeNodePin, canTreeNodeShowExpander, treeItemPaddingLeft, usesFullWidthTreeLabel } from "@/lib/sidebarTreeItemLayout";
 import { buildTableSelectSql } from "@/lib/tableSelectSql";
@@ -3401,6 +3402,7 @@ const tableComment = computed(() =>
     ? props.node.comment
     : null,
 );
+const databaseSizeLabel = computed(() => (!settingsStore.editorSettings.sidebarHideDatabaseSize && props.node.type === "database" ? formatBytes(props.node.size) : null));
 const paddingLeft = computed(() => treeItemPaddingLeft(props.depth));
 const isConnected = computed(() => props.node.type === "connection" && !!props.node.connectionId && connectionStore.connectedIds.has(props.node.connectionId));
 const isConnectionReadonly = computed(() => props.node.type === "connection" && !!props.node.connectionId && (connectionStore.getConfig(props.node.connectionId)?.read_only ?? false));
@@ -4425,6 +4427,7 @@ function treeItemMenuItems(): ContextMenuItem[] {
             @click.stop
           />
           <span v-else ref="labelRef" :class="labelWidthClass">{{ visibleLabel(node) }}</span>
+          <span v-if="databaseSizeLabel" class="ml-auto shrink-0 text-muted-foreground/60 text-[10px]">{{ databaseSizeLabel }}</span>
           <span
             v-if="
               (node.type === 'group-tables' || node.type === 'group-views' || node.type === 'group-materialized-views' || node.type === 'group-procedures' || node.type === 'group-functions' || node.type === 'group-sequences' || node.type === 'group-packages' || node.type === 'group-partitions') &&

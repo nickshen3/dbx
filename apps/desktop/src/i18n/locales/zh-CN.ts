@@ -2667,6 +2667,8 @@ export default withEnglishFallback({
     sidebarTablePageSizeDescription: "侧边栏树每页最多加载的表/对象数量。表多时可以调大减少翻页次数。",
     sidebarHideTableComments: "隐藏侧边栏表注释",
     sidebarHideTableCommentsDescription: "隐藏侧边栏中表名旁边显示的表/视图注释，以节省横向空间。",
+    sidebarHideDatabaseSize: "隐藏侧边栏数据库大小",
+    sidebarHideDatabaseSizeDescription: "隐藏侧边栏数据库名称旁显示的库大小（KB/MB/GB/TB）。仅 MySQL、PostgreSQL、SQLServer、ClickHouse、MongoDB 支持。",
     sidebarAllowHorizontalScroll: "允许侧边栏横向滚动",
     sidebarAllowHorizontalScrollDescription: "完整显示较长的表、视图和集合名称；默认关闭以保留省略号截断。",
     snippetsDescription: "自定义编辑器中触发的 SQL 代码片段模板。",

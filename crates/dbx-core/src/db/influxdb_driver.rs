@@ -184,7 +184,7 @@ pub async fn list_databases(client: &InfluxdbClient) -> Result<Vec<DatabaseInfo>
         .iter()
         .flat_map(|r| &r.series)
         .flat_map(|s| &s.values)
-        .map(|row| DatabaseInfo { name: row[0].as_str().unwrap_or("").to_string() })
+        .map(|row| DatabaseInfo { name: row[0].as_str().unwrap_or("").to_string(), size: None })
         .collect())
 }
 

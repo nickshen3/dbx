@@ -246,6 +246,7 @@ const editReuseDataTab = ref(settingsStore.editorSettings.reuseDataTab);
 const editUpdateNotificationsEnabled = ref(settingsStore.editorSettings.updateNotificationsEnabled);
 const editSidebarHiddenTablePrefixes = ref(settingsStore.editorSettings.sidebarHiddenTablePrefixes.join("\n"));
 const editSidebarHideTableComments = ref(settingsStore.editorSettings.sidebarHideTableComments);
+const editSidebarHideDatabaseSize = ref(settingsStore.editorSettings.sidebarHideDatabaseSize);
 const editSidebarAllowHorizontalScroll = ref(settingsStore.editorSettings.sidebarAllowHorizontalScroll);
 const editExportBatchSize = ref(settingsStore.editorSettings.exportBatchSize);
 const editExportRowLimitEnabled = ref(settingsStore.editorSettings.exportRowLimitEnabled);
@@ -517,6 +518,7 @@ watch(
       editUpdateNotificationsEnabled.value = settingsStore.editorSettings.updateNotificationsEnabled;
       editSidebarHiddenTablePrefixes.value = settingsStore.editorSettings.sidebarHiddenTablePrefixes.join("\n");
       editSidebarHideTableComments.value = settingsStore.editorSettings.sidebarHideTableComments;
+      editSidebarHideDatabaseSize.value = settingsStore.editorSettings.sidebarHideDatabaseSize;
       editSidebarAllowHorizontalScroll.value = settingsStore.editorSettings.sidebarAllowHorizontalScroll;
       editExportBatchSize.value = settingsStore.editorSettings.exportBatchSize;
       editExportRowLimitEnabled.value = settingsStore.editorSettings.exportRowLimitEnabled;
@@ -581,6 +583,7 @@ function hasChanges(): boolean {
     editReuseDataTab.value !== settingsStore.editorSettings.reuseDataTab ||
     editUpdateNotificationsEnabled.value !== settingsStore.editorSettings.updateNotificationsEnabled ||
     editSidebarHideTableComments.value !== settingsStore.editorSettings.sidebarHideTableComments ||
+    editSidebarHideDatabaseSize.value !== settingsStore.editorSettings.sidebarHideDatabaseSize ||
     editSidebarAllowHorizontalScroll.value !== settingsStore.editorSettings.sidebarAllowHorizontalScroll ||
     editExportBatchSize.value !== settingsStore.editorSettings.exportBatchSize ||
     editExportRowLimitEnabled.value !== settingsStore.editorSettings.exportRowLimitEnabled ||
@@ -627,6 +630,7 @@ async function persistSettings() {
     reuseDataTab: editReuseDataTab.value,
     updateNotificationsEnabled: editUpdateNotificationsEnabled.value,
     sidebarHideTableComments: editSidebarHideTableComments.value,
+    sidebarHideDatabaseSize: editSidebarHideDatabaseSize.value,
     sidebarAllowHorizontalScroll: editSidebarAllowHorizontalScroll.value,
     sidebarHiddenTablePrefixes: normalizeSidebarHiddenTablePrefixes(editSidebarHiddenTablePrefixes.value),
     exportBatchSize: editExportBatchSize.value,
@@ -758,6 +762,7 @@ function resetAllDefaults() {
   editReuseDataTab.value = DEFAULT_EDITOR_SETTINGS.reuseDataTab;
   editUpdateNotificationsEnabled.value = DEFAULT_EDITOR_SETTINGS.updateNotificationsEnabled;
   editSidebarHideTableComments.value = DEFAULT_EDITOR_SETTINGS.sidebarHideTableComments;
+  editSidebarHideDatabaseSize.value = DEFAULT_EDITOR_SETTINGS.sidebarHideDatabaseSize;
   editSidebarAllowHorizontalScroll.value = DEFAULT_EDITOR_SETTINGS.sidebarAllowHorizontalScroll;
   editSidebarHiddenTablePrefixes.value = DEFAULT_EDITOR_SETTINGS.sidebarHiddenTablePrefixes.join("\n");
   editExportBatchSize.value = DEFAULT_EDITOR_SETTINGS.exportBatchSize;
@@ -2584,6 +2589,20 @@ onUnmounted(cleanupPreviewEditor);
                   </HelpTooltip>
                 </div>
                 <Switch id="sidebar-hide-table-comments" v-model="editSidebarHideTableComments" />
+              </div>
+              <div class="flex items-center justify-between gap-4 rounded-md border bg-muted/20 px-3 py-2">
+                <div class="flex items-center gap-2">
+                  <Label for="sidebar-hide-database-size">{{ t("settings.sidebarHideDatabaseSize") }}</Label>
+                  <Tooltip>
+                    <TooltipTrigger as-child>
+                      <CircleHelp class="h-3.5 w-3.5 cursor-help text-muted-foreground hover:text-foreground" />
+                    </TooltipTrigger>
+                    <TooltipContent class="max-w-[320px] text-xs leading-relaxed" side="top" align="start">
+                      {{ t("settings.sidebarHideDatabaseSizeDescription") }}
+                    </TooltipContent>
+                  </Tooltip>
+                </div>
+                <Switch id="sidebar-hide-database-size" v-model="editSidebarHideDatabaseSize" />
               </div>
               <div class="flex items-center justify-between gap-4 rounded-md border bg-muted/20 px-3 py-2">
                 <div class="flex items-center gap-2">

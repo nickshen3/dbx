@@ -103,7 +103,7 @@ pub fn duckdb_list_databases_with_attached(
     let rows = stmt
         .query_map([], |row| {
             let name = row.get::<_, String>(0)?;
-            Ok(db::DatabaseInfo { name: if name == primary { "main".to_string() } else { name } })
+            Ok(db::DatabaseInfo { name: if name == primary { "main".to_string() } else { name }, size: None })
         })
         .map_err(|e| e.to_string())?;
     Ok(rows.filter_map(|row| row.ok()).collect())
@@ -528,7 +528,7 @@ async fn list_databases_once(state: &AppState, connection_id: &str) -> Result<Ve
         let connections = state.connections.read().await;
         #[cfg(feature = "duckdb-bundled")]
         if extract_pool!(&connections, connection_id, ExternalTabular).is_some() {
-            return Ok(vec![db::DatabaseInfo { name: "main".to_string() }]);
+            return Ok(vec![db::DatabaseInfo { name: "main".to_string(), size: None }]);
         }
         if let Some(PoolKind::ExternalDriver { config, session, .. }) = connections.get(connection_id) {
             let config = config.clone();
@@ -556,8 +556,8 @@ async fn list_databases_once(state: &AppState, connection_id: &str) -> Result<Ve
                 state.configs.read().await.get(connection_id).is_some_and(|c| c.db_type == DatabaseType::MongoDb);
             if is_mongo {
                 drop(connections);
-                let dbs = crate::mongo_ops::mongo_list_databases_core(state, connection_id).await?;
-                return Ok(dbs.into_iter().map(|name| db::DatabaseInfo { name }).collect());
+                let dbs = crate::mongo_ops::mongo_list_databases_with_size_core(state, connection_id).await?;
+                return Ok(dbs);
             }
             drop(connections);
             let mut client = client.lock().await;
@@ -2032,7 +2032,7 @@ mod tests {
     }
 
     fn test_database_info(name: &str) -> super::db::DatabaseInfo {
-        super::db::DatabaseInfo { name: name.to_string() }
+        super::db::DatabaseInfo { name: name.to_string(), size: None }
     }
 
     #[test]

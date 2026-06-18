@@ -3,6 +3,10 @@ use serde::{Deserialize, Serialize};
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct DatabaseInfo {
     pub name: String,
+    /// 数据库占用大小（字节）。仅 MySQL/PostgreSQL/SQLServer/ClickHouse/MongoDB 等少数库能可靠获取；
+    /// 获取失败或不受支持时为 None（前端不显示，不影响数据库列表）。
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub size: Option<u64>,
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize)]

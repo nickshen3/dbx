@@ -254,6 +254,8 @@ export interface JdbcPluginStatus {
 
 export interface DatabaseInfo {
   name: string;
+  /** 数据库占用大小（字节）。仅 MySQL/PostgreSQL/SQLServer/ClickHouse/MongoDB 等少数库支持；不支持或获取失败时不显示。 */
+  size?: number | null;
 }
 
 export interface SchemaInfo {
@@ -552,6 +554,7 @@ export interface TreeNode {
   tableName?: string;
   tableType?: string;
   comment?: string | null;
+  size?: number | null;
   objectCount?: number;
   loadedKeyCount?: number;
   totalKeyCount?: number;

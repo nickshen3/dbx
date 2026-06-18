@@ -2660,6 +2660,8 @@ export default {
     sidebarTablePageSizeDescription: "Maximum number of tables/objects loaded per page in the sidebar tree. Increase if you have many tables and want fewer pages.",
     sidebarHideTableComments: "Hide table comments in sidebar",
     sidebarHideTableCommentsDescription: "Hide the inline table/view comments shown next to names in the sidebar tree to save horizontal space.",
+    sidebarHideDatabaseSize: "Hide database size in sidebar",
+    sidebarHideDatabaseSizeDescription: "Hide the database size shown next to database names in the sidebar (KB/MB/GB/TB). Only MySQL, PostgreSQL, SQLServer, ClickHouse, MongoDB are supported.",
     sidebarAllowHorizontalScroll: "Allow sidebar horizontal scroll",
     sidebarAllowHorizontalScrollDescription: "Show long table, view, and collection names in full by allowing horizontal sidebar scrolling.",
     snippetsDescription: "Customize SQL snippet templates triggered in the editor.",

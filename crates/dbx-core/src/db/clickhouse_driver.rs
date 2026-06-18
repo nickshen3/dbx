@@ -287,8 +287,42 @@ pub async fn test_connection(client: &ChClient, timeout: Duration) -> Result<(),
 }
 
 pub async fn list_databases(client: &ChClient) -> Result<Vec<DatabaseInfo>, String> {
+    match list_databases_with_size(client).await {
+        Ok(databases) => Ok(databases),
+        Err(error) => {
+            log::debug!("Falling back to name-only database list after size query failed: {error}");
+            list_databases_names_only(client).await
+        }
+    }
+}
+
+async fn list_databases_with_size(client: &ChClient) -> Result<Vec<DatabaseInfo>, String> {
+    let result = ch_query(
+        client,
+        "SELECT d.name AS name, \
+                (SELECT sum(p.bytes_on_disk) FROM system.parts p WHERE p.database = d.name AND p.active = 1) AS size_bytes \
+         FROM system.databases d \
+         ORDER BY d.name",
+        None,
+    )
+    .await?;
+    Ok(result
+        .data
+        .iter()
+        .map(|row| DatabaseInfo {
+            name: row[0].as_str().unwrap_or("").to_string(),
+            size: json_value_as_u64(row.get(1)),
+        })
+        .collect())
+}
+
+async fn list_databases_names_only(client: &ChClient) -> Result<Vec<DatabaseInfo>, String> {
     let result = ch_query(client, "SELECT name FROM system.databases ORDER BY name", None).await?;
-    Ok(result.data.iter().map(|row| DatabaseInfo { name: row[0].as_str().unwrap_or("").to_string() }).collect())
+    Ok(result
+        .data
+        .iter()
+        .map(|row| DatabaseInfo { name: row[0].as_str().unwrap_or("").to_string(), size: None })
+        .collect())
 }
 
 pub async fn list_tables(client: &ChClient, database: &str) -> Result<Vec<TableInfo>, String> {

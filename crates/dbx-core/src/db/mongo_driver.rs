@@ -139,6 +139,32 @@ pub async fn list_databases(client: &Client) -> Result<Vec<String>, String> {
     client.list_database_names().await.map_err(|e| e.to_string())
 }
 
+/// 返回 (数据库名, 占用大小字节)。listDatabases 命令原生返回 sizeOnDisk；
+/// empty 库或 sizeOnDisk <= 0 时大小为 None。
+pub async fn list_databases_with_size(client: &Client) -> Result<Vec<(String, Option<u64>)>, String> {
+    let result = client.database("admin").run_command(doc! { "listDatabases": 1 }).await.map_err(|e| e.to_string())?;
+    let databases = result.get_array("databases").map_err(|e| e.to_string())?;
+    let mut entries: Vec<(String, Option<u64>)> = databases
+        .iter()
+        .filter_map(|value| {
+            let doc = value.as_document()?;
+            let name = doc.get_str("name").ok()?.to_string();
+            let empty = doc.get_bool("empty").unwrap_or(false);
+            let size = if empty {
+                None
+            } else {
+                doc.get("sizeOnDisk")
+                    .and_then(|v| v.as_i64().or_else(|| v.as_f64().map(|f| f as i64)))
+                    .map(|size| size as u64)
+                    .filter(|&size| size > 0)
+            };
+            Some((name, size))
+        })
+        .collect();
+    entries.sort_by(|a, b| a.0.to_lowercase().cmp(&b.0.to_lowercase()).then_with(|| a.0.cmp(&b.0)));
+    Ok(entries)
+}
+
 pub async fn list_collections(client: &Client, database: &str) -> Result<Vec<String>, String> {
     client.database(database).list_collection_names().await.map_err(|e| e.to_string())
 }
