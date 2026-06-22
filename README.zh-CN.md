@@ -309,6 +309,16 @@ cd agents
 
 ```bash
 make package
+
+# 清理缓存
+## 1、清理 Vite 依赖预构建缓存 + 旧的 dist 产物
+Remove-Item -Recurse -Force node_modules/.vite -ErrorAction SilentlyContinue
+Remove-Item -Recurse -Force dist -ErrorAction SilentlyContinue
+## 2、清理 Rust 增量产物，在 src-tauri/ 下执行
+cd src-tauri
+cargo clean -p dbx   #只清 dbx 这个 crate 的产物，依赖编译产物保留
+或
+cargo clean        # 清掉整个 target，全量重编
 ```
 
 安装包输出在 `src-tauri/target/release/bundle/` 目录。
