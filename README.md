@@ -310,11 +310,40 @@ Build artifacts from `agents/drivers/<db-type>/build/libs/` are picked up by loc
 
 ### Build
 
+Install dependencies first:
+
 ```bash
-make package
+pnpm install --frozen-lockfile
 ```
 
-The installer will be in `src-tauri/target/release/bundle/`.
+Build the desktop installer:
+
+```bash
+make package      # equivalent to pnpm tauri build
+```
+
+This builds the app in Release mode and produces installers for your **current platform** (DuckDB is always bundled). Artifacts are output to `src-tauri/target/release/bundle/`:
+
+| Platform | Artifacts |
+| -------- | --------- |
+| Windows | `.msi` installer, NSIS `.exe` installer |
+| macOS | `.dmg`, `.app` |
+| Linux | `.deb`, `.rpm`, `.AppImage` |
+
+> `createUpdaterArtifacts` is set to `false` in `tauri.conf.json`, so no auto-update signed artifacts are generated.
+
+Clean build caches:
+
+```bash
+# 1. Vite dependency pre-bundle cache + stale dist output
+Remove-Item -Recurse -Force node_modules/.vite,dist -ErrorAction SilentlyContinue   # Windows
+rm -rf node_modules/.vite dist                                                      # macOS/Linux
+
+# 2. Rust incremental artifacts (run inside src-tauri/)
+cd src-tauri
+cargo clean -p dbx   # only the dbx crate's artifacts, keep dependency build cache
+cargo clean          # wipe the entire target for a full rebuild
+```
 
 ## Tech Stack
 

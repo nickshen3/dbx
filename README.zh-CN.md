@@ -307,21 +307,40 @@ cd agents
 
 ### 构建
 
-```bash
-make package
+打包前先安装依赖：
 
-# 清理缓存
-## 1、清理 Vite 依赖预构建缓存 + 旧的 dist 产物
-Remove-Item -Recurse -Force node_modules/.vite -ErrorAction SilentlyContinue
-Remove-Item -Recurse -Force dist -ErrorAction SilentlyContinue
-## 2、清理 Rust 增量产物，在 src-tauri/ 下执行
-cd src-tauri
-cargo clean -p dbx   #只清 dbx 这个 crate 的产物，依赖编译产物保留
-或
-cargo clean        # 清掉整个 target，全量重编
+```bash
+pnpm install --frozen-lockfile
 ```
 
-安装包输出在 `src-tauri/target/release/bundle/` 目录。
+打包桌面应用安装包：
+
+```bash
+make package      # 等同于 pnpm tauri build
+```
+
+以 Release 模式构建并生成**当前平台**的安装包（始终包含 DuckDB）。产物输出在 `src-tauri/target/release/bundle/`：
+
+| 平台 | 产物 |
+| ---- | ---- |
+| Windows | `.msi` 安装包、NSIS `.exe` 安装程序 |
+| macOS | `.dmg`、`.app` |
+| Linux | `.deb`、`.rpm`、`.AppImage` |
+
+> `tauri.conf.json` 中 `createUpdaterArtifacts` 设为 `false`，打包时不生成自动更新签名产物。
+
+清理缓存：
+
+```bash
+# 1、清理 Vite 依赖预构建缓存 + 旧的 dist 产物
+Remove-Item -Recurse -Force node_modules/.vite -ErrorAction SilentlyContinue
+Remove-Item -Recurse -Force dist -ErrorAction SilentlyContinue
+
+# 2、清理 Rust 增量产物（在 src-tauri/ 下执行）
+cd src-tauri
+cargo clean -p dbx   # 只清 dbx 这个 crate 的产物，依赖编译产物保留
+cargo clean          # 清掉整个 target，全量重编
+```
 
 ## 技术栈
 
