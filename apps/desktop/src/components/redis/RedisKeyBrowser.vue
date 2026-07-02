@@ -58,6 +58,7 @@ type RedisCommandHistoryEntry = {
 const props = defineProps<{
   connectionId: string;
   db: number;
+  blockDangerousRedisCommands: boolean;
 }>();
 
 const flatKeys = ref<RedisKeyInfo[]>([]);
@@ -473,7 +474,7 @@ async function runRedisCommand(command: string) {
   const prompt = commandPrompt.value;
   commandRunning.value = true;
   try {
-    const result = await api.redisExecuteCommand(props.connectionId, commandDb.value, command);
+    const result = await api.redisExecuteCommand(props.connectionId, commandDb.value, command, !props.blockDangerousRedisCommands);
     appendCommandHistory({
       prompt,
       command,
@@ -743,6 +744,13 @@ async function executeCommand() {
 
   const safety = classifyRedisCommandSafety(command);
   if (safety === "blocked") {
+    if (!props.blockDangerousRedisCommands) {
+      // 安全模式已关闭，放行 blocked 命令
+      commandText.value = "";
+      commandHistoryIndex.value = -1;
+      await runRedisCommand(command);
+      return;
+    }
     appendCommandHistory({
       prompt: commandPrompt.value,
       command,
@@ -754,6 +762,13 @@ async function executeCommand() {
     return;
   }
   if (safety === "confirm") {
+    if (!props.blockDangerousRedisCommands) {
+      // 安全模式已关闭，跳过确认弹窗直接执行
+      commandText.value = "";
+      commandHistoryIndex.value = -1;
+      await runRedisCommand(command);
+      return;
+    }
     pendingDanger.value = { kind: "command", command };
     showDangerConfirm.value = true;
     commandText.value = "";
