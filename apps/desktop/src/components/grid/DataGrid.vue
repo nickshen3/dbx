@@ -205,6 +205,7 @@ import { reserveDataGridHeaderLine } from "@/lib/dataGrid/dataGridHeaderLayout";
 import { supportsTableStructureEditing } from "@/lib/database/databaseCapabilities";
 import { rememberDataGridConditionHistory } from "@/lib/dataGrid/dataGridConditionHistory";
 import { effectiveDatabaseTypeForConnection } from "@/lib/database/jdbcDialect";
+import { dataGridConditionColumnOptions } from "@/lib/dataGrid/dataGridConditionCompletion";
 import { isMacOS } from "@/lib/backend/platform";
 import { appendDebugLog, isDebugLoggingEnabled } from "@/lib/backend/debugLog";
 import { formatShortcut } from "@/lib/editor/shortcutRegistry";
@@ -567,6 +568,7 @@ const { searchText, deferredSearchText: deferredClientSearchText, overlayVisible
 
 const orderByInput = ref(props.initialOrderByInput ?? "");
 const whereFilterInput = ref(props.initialWhereInput ?? "");
+const conditionColumns = computed(() => dataGridConditionColumnOptions(props.tableMeta?.columns ?? props.result.columns, resolvedDatabaseType.value));
 const conditionHistoryScope = computed(() => ({
   connectionId: props.connectionId,
   database: props.database,
@@ -7482,7 +7484,7 @@ const gridContextMenuItems = computed<ContextMenuItem[]>(() => {
                   v-model:order-by-input="orderByInput"
                   v-model:filter-builder-open="filterBuilderOpen"
                   :columns="props.tableMeta?.columns.map((column) => column.name) ?? props.result.columns"
-                  :condition-columns="props.tableMeta?.columns ?? props.result.columns"
+                  :condition-columns="conditionColumns"
                   :history-scope="conditionHistoryScope"
                   :can-use-where-search="canUseWhereSearch"
                   :compact="compactDataGridToolbar"
