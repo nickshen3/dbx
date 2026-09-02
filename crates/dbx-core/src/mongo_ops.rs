@@ -37,7 +37,7 @@ pub async fn mongo_list_databases_with_size_core(
             Err(error) => Err(error),
         },
         PoolKind::Elasticsearch(_) | PoolKind::VectorDb(_) => {
-            Ok(vec![crate::db::DatabaseInfo { name: "default".to_string(), size_bytes: None }])
+            Ok(vec![crate::db::DatabaseInfo { name: "default".to_string(), ..Default::default() }])
         }
         PoolKind::Agent(client) => {
             let mut client = client.lock().await;
@@ -74,7 +74,7 @@ fn sort_database_infos(mut entries: Vec<(String, Option<u64>)>) -> Vec<crate::db
     });
     entries
         .into_iter()
-        .map(|(name, size)| crate::db::DatabaseInfo { name, size_bytes: size.map(|s| s as i64) })
+        .map(|(name, size)| crate::db::DatabaseInfo { name, size_bytes: size.map(|s| s as i64), ..Default::default() })
         .collect()
 }
 
@@ -83,7 +83,7 @@ fn fallback_database_with_size(
     fallback_database: Option<String>,
 ) -> Result<Vec<crate::db::DatabaseInfo>, String> {
     fallback_database
-        .map(|name| vec![crate::db::DatabaseInfo { name, size_bytes: None }])
+        .map(|name| vec![crate::db::DatabaseInfo { name, ..Default::default() }])
         .ok_or_else(|| error.to_string())
 }
 

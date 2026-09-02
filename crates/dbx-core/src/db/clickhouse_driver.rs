@@ -632,6 +632,7 @@ async fn list_databases_with_size(client: &ChClient) -> Result<Vec<DatabaseInfo>
         .map(|row| DatabaseInfo {
             name: row[0].as_str().unwrap_or("").to_string(),
             size_bytes: json_value_as_u64(row.get(1)).map(|v| v as i64),
+            ..Default::default()
         })
         .collect())
 }
