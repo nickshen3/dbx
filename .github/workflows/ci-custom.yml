@@ -49,10 +49,15 @@ jobs:
   test:
     name: frontend check (ubuntu-22.04)
     runs-on: ubuntu-22.04
-    timeout-minutes: 30
+    timeout-minutes: 60
     env:
       # Unsupported-platform package warnings are expected during install.
       NPM_CONFIG_LOGLEVEL: error
+      # exportSmoke.spec.ts 需要调用 cargo；与上游 frontend job 相同的两层缓存策略
+      CARGO_INCREMENTAL: "0"
+      RUSTC_WRAPPER: sccache
+      # Fork PRs cannot read repository secrets, so retain the GHA backend for them.
+      SCCACHE_GHA_ENABLED: ${{ secrets.SCCACHE_S3_BUCKET == '' && 'true' || 'false' }}
     steps:
       - name: 检出代码
         uses: actions/checkout@v5
@@ -71,6 +76,60 @@ jobs:
       # 只安装根应用及其 workspace 依赖（packages/cli、packages/mcp-server 不参与）
       - name: 安装前端依赖
         run: pnpm --filter dbx... install --frozen-lockfile
+
+      - name: 安装 Rust
+        uses: dtolnay/rust-toolchain@1.97.1
+
+      - name: 安装 sccache
+        uses: mozilla-actions/sccache-action@9e7fa8a12102821edf02ca5dbea1acd0f89a2696 # v0.0.10
+        with:
+          version: "v0.10.0"
+
+      - name: Configure S3 sccache
+        if: env.SCCACHE_GHA_ENABLED != 'true'
+        shell: bash
+        env:
+          CACHE_BUCKET: ${{ secrets.SCCACHE_S3_BUCKET }}
+          CACHE_ENDPOINT: ${{ secrets.SCCACHE_S3_ENDPOINT }}
+          CACHE_REGION: ${{ secrets.SCCACHE_S3_REGION }}
+          CACHE_KEY_PREFIX: ${{ secrets.SCCACHE_S3_KEY_PREFIX }}
+          CACHE_ACCESS_KEY_ID: ${{ secrets.SCCACHE_S3_ACCESS_KEY_ID }}
+          CACHE_SECRET_ACCESS_KEY: ${{ secrets.SCCACHE_S3_SECRET_ACCESS_KEY }}
+        run: |
+          {
+            echo "SCCACHE_BUCKET=${CACHE_BUCKET}"
+            echo "SCCACHE_ENDPOINT=${CACHE_ENDPOINT}"
+            echo "SCCACHE_REGION=${CACHE_REGION}"
+            echo "SCCACHE_S3_KEY_PREFIX=${CACHE_KEY_PREFIX}"
+            echo "SCCACHE_S3_USE_SSL=true"
+            echo "AWS_ACCESS_KEY_ID=${CACHE_ACCESS_KEY_ID}"
+            echo "AWS_SECRET_ACCESS_KEY=${CACHE_SECRET_ACCESS_KEY}"
+          } >> "$GITHUB_ENV"
+
+      - name: Rust 缓存
+        uses: swatinem/rust-cache@v2
+        with:
+          workspaces: "./ -> target"
+          # 独立指纹：本 job 只构建 docs_export_smoke（--no-default-features）
+          shared-key: ci-custom-docs-export-smoke-x86_64-unknown-linux-gnu
+          cache-on-failure: true
+          save-if: ${{ github.ref == 'refs/heads/custom' || github.event_name == 'workflow_dispatch' }}
+
+      # exportSmoke.spec.ts 会在测试里 shell out 到该 example；预先构建好，
+      # 测试内的 cargo run 才是缓存命中而不是冷编译。
+      # --no-default-features：docs 模块不需要 duckdb/mq-admin/sqlcipher/system-fonts，
+      # 因此无需安装任何系统开发包。
+      - name: 预构建 docs_export_smoke 示例
+        run: cargo build -p dbx-core --locked --no-default-features --example docs_export_smoke
+
+      # 守卫已提交的 docs 导出 bundle（assets/docs-export.*）与源码一致
+      - name: 校验 docs 导出 bundle
+        run: cargo test -p dbx-core --locked --no-default-features --lib docs::export
+
+      - name: Show sccache stats
+        if: always()
+        continue-on-error: true
+        run: ${SCCACHE_PATH} --show-stats
 
       - name: 前端检查（format / lint / typecheck / vitest）
         run: pnpm check
